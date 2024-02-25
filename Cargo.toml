@@ -1,0 +1,13 @@
+[package]
+name = "countroo"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+walkdir = "2.4.0"
+num-format = "0.4.4"
+
+
+[features]
+default = []
+formatted_output = []
