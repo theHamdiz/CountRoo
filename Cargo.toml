@@ -2,12 +2,31 @@
 name = "countroo"
 version = "0.1.0"
 edition = "2021"
+build = "build.rs"
 
 [dependencies]
 walkdir = "2.4.0"
 num-format = "0.4.4"
-
+rayon = "1.8.1"
+serde = { version = "1.0.197", features = ["derive"] }
+toml = { version = "0.8.10", optional = true }
+serde_yaml = { version = "0.9.32", optional = true }
+serde_json = { version = "1.0.114", optional = true }
+quick-xml = { version = "0.31.0", optional = true, features = ["serialize"] }
+colored = {version = "2.1.0", optional = true}
 
 [features]
-default = []
-formatted_output = []
+default = ["newline-config", "tabular-output"]
+newline-config = []
+toml-config = ["toml"]
+yaml-config = ["serde_yaml"]
+json-config = ["serde_json"]
+xml-config = ["quick-xml"]
+
+tabular-output = []
+toml-output = ["toml"]
+yaml-output = ["serde_yaml"]
+json-output = ["serde_json"]
+xml-output = ["quick-xml"]
+colored-output = ["colored"]
+
