@@ -233,19 +233,36 @@ impl Default for Config{
 
 
 #[derive(Default)]
+#[cfg(feature = "default")]
 pub struct ConfigBuilder {
     project_path: Option<String>,
     extensions: Vec<String>,
     count_empty_lines: bool,
 }
 
+#[cfg(feature = "default")]
 impl ConfigBuilder {
     pub fn project_path(mut self, path: &str) -> Self {
-        let project_path = match Config::is_relative_path(path){
-            true => Config::find_src_folder().unwrap().parent().unwrap().join(path).to_string_lossy().to_string(),
-            false => path.to_string()
+        let mut config_path = Config::find_src_folder()
+            .unwrap_or_else(|| panic!("Could not find src folder"));
+        
+        config_path = match Config::is_relative_path(path){
+            true => {
+                
+                match path.to_lowercase().as_str() {
+                    "src" | "." => {
+                       config_path
+                    },
+                    _ => {
+                        config_path.push(path);
+                        config_path
+                    }
+                }
+            },
+            false => config_path
         };
-        self.project_path = Some(project_path);
+        
+        self.project_path = Some(config_path.to_string_lossy().to_string());
         self
     }
 
@@ -574,7 +591,6 @@ mod tests {
 
     #[test]
     fn test_builder_pattern_produces_same_object_with_extensions(){
-
         let config = Config::builder()
             .project_path("src")
             .extensions(vec!["rs","py"])
@@ -583,7 +599,7 @@ mod tests {
             .unwrap();
 
         let config2 = Config {
-            project_path: "E:\\RustRoverProjects\\countroo\\src".to_string() ,
+            project_path: PathBuf::from("E:\\RustRoverProjects\\countroo\\src").to_string_lossy().to_string().replace('\\', "/") ,
             config_path: None,
             extensions: vec!["rs".to_string(),"py".to_string()],
             count_empty_lines: false,
