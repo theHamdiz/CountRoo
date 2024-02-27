@@ -39,6 +39,7 @@ use quick_xml::de::DeError as XmlError;
 use crate::colorizer::{AccentColor, LanguageBrandings, LanguageColorMapping};
 #[cfg(feature = "tabular-output")]
 use crate::tabular::{BorderStyle};
+use crate::tabular::ColoredTable;
 
 #[cfg(feature = "default")]
 const CONFIG_TXT_CONTENTS: &str = include_str!("config.txt");
@@ -56,22 +57,6 @@ pub trait CertainTypesCounter {
 pub trait AllTypesCounter {
     fn count_lines_of_code_for_all_types(&mut self) -> Result<usize, LocCounterError>;
 }
-
-#[cfg(feature = "default")]
-pub trait FormattedOutput {
-    fn formatted_output(&self) -> String;
-}
-
-#[cfg(feature = "default")]
-pub trait TabularOutput {
-    fn tabular_output(&self, output_writer: &dyn OutputWriter);
-}
-
-#[cfg(feature = "colored-output")]
-pub(crate) trait ColorizedOutput {
-    fn apply_colors_to_table(&self, table: &Table, color_map: &[LanguageColorMapping]) -> ColoredString;
-}
-
 
 #[cfg(feature = "default")]
 pub(crate) trait PathHelpers{
@@ -116,6 +101,7 @@ pub struct Config {
     extensions: Vec<String>,
     count_empty_lines: bool,
 }
+
 
 
 #[cfg(any(feature = "toml-config", feature = "json-config", feature = "yaml-config", feature = "xml-config", feature = "newline-config"))]
@@ -338,7 +324,6 @@ impl CountRoo {
             })
             .par_bridge()
             .map(move |entry| {
-                    println!("Processing file: {:?}", entry.path().to_string_lossy().to_string());
                     Self::count_lines_for_file(config.count_empty_lines, &entry.into_path().to_string_lossy().to_string()).unwrap_or(0)
             }).collect::<Vec<usize>>();
 
@@ -351,7 +336,10 @@ impl CountRoo {
     }
 
     pub fn count_lines_for_file(count_empty_lines: bool, entry: &String) -> Result<usize, LocCounterError> {
-        println!("Counting lines for file: {:?}", entry);
+        // Return early if the path is not a file, just in case ( Fallback Guard ).
+        if !Path::new(entry).is_file() {
+            return Ok(0);
+        }
         let file = File::open(entry).map_err(LocCounterError::IoError)?;
         let reader = BufReader::new(file);
 
@@ -451,17 +439,43 @@ impl FormattedOutput for CountRoo {
 
 #[cfg(feature = "tabular-output")]
 impl TabularOutput for CountRoo {
-    fn tabular_output(&self, output_writer: &dyn OutputWriter) {
-        let mut table = Table::new("{:<} | {:<}")
-            .with_border_style(BorderStyle::Rounded);
-        table.add_row(Row::new().with_cell_str("File Extension").with_cell_str("Lines of Code"));
+    fn print_table(&self, output_writer: StdoutWriter) {
+        let mut table = {
+            #[cfg(not(feature = "colored-output"))]
+            Table::new()
+                .with_border_style(BorderStyle::Rounded);
+
+            #[cfg(feature = "colored-output")]{
+                ColoredTable::new(LanguageBrandings::default())
+                    .with_border_style(BorderStyle::Rounded);
+            }
+        };
 
         let extension_counts = self.calculate_extension_counts();
 
+        let total_count = extension_counts.values().sum::<usize>();
         for (extension, count) in extension_counts {
-            table.add_row(Row::new().with_cell_str(extension.as_str()).with_cell_str(count.to_formatted_string(&Locale::en).as_str()));
+            let padding = " ".repeat(8 - extension.len());
+            let formatted_extension = format!("{}{}{}", "  =>   ",extension, padding);
+            let count_symbol = "     |  #   |";
+            let formatted_padding = " ".repeat(6 - count.to_formatted_string(&Locale::en).len());
+            let formatted_count = format!("   {}{}", count.to_formatted_string(&Locale::en), formatted_padding);
+
+            let percentage = ((count as f32/total_count as f32) * 100.0).round();
+            let percentage_padding = " ".repeat(6 - percentage.to_string().len());
+            let formatted_percentage = format!("  {}%{}", percentage , percentage_padding);
+            table!(formatted_extension, count_symbol, formatted_count, formatted_percentage);
+
+            // table.add_row(Row::new().with_cell_str(formatted_extension.as_str())
+            //     .with_cell_str(count_symbol)
+            //     .with_cell_str(formatted_count.as_str())
+            //     .with_cell_str(formatted_percentage.as_str()));
+            // Adding the row footer.
+            // table.add_row(Row::new().with_cell_str("┼───┼───────────────┼──────┼─────────┼────────────┼\n"));
         }
 
+        let total = format!("│   │  Total               │  {}  │    100%    │\n", self.total_lines.to_formatted_string(&Locale::en));
+        table.add_row(Row::new().with_cell_str(total.as_str()));
         #[cfg(feature = "colored-output")]{
             let color_map = LanguageBrandings::default().color_map;
             let colored_table = self.apply_colors_to_table(&table, &color_map);
@@ -531,6 +545,7 @@ macro_rules! countroo_all {
         $countroo.count_lines_of_code_for_all_types()?
     }
 }
+
 //
 // End of Countroo Section!
 //
@@ -544,17 +559,35 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_count_lines_of_code_for_certain_types() {
+    fn test_count_lines_of_code_for_certain_types_manual_construction() {
         let config: Config = Config {
             project_path: "src".to_string(),
             config_path: None,
             extensions: vec!["rs".to_string()],
             count_empty_lines: false,
         };
+
         let mut counter = CountRoo::new(config);
         let result = counter.count_lines_of_code_for_certain_types().unwrap();
+        println!("Number of lines: {:?}", result);
+        println!("{:?}", counter.print_table(StdoutWriter::default()));
         assert_ne!(result, 0);
-        println!("Code Analysis:\n {:?}", counter.tabular_output(&StdoutWriter{}));
+    }
+
+    #[test]
+    fn test_count_lines_of_code_for_certain_types_builder_pattern() {
+        let config = ConfigBuilder::default()
+            .project_path("src")
+            .extension("rs")
+            .count_empty_lines(false)
+            .build()
+            .unwrap();
+
+        let mut counter = CountRoo::new(config);
+        let result = counter.count_lines_of_code_for_certain_types().unwrap();
+        println!("Number of lines: {:?}", result);
+        println!("{:?}", counter.print_table(StdoutWriter::default()));
+        assert_ne!(result, 0);
     }
 
     #[test]
@@ -563,7 +596,89 @@ mod tests {
         let mut counter = CountRoo::new(config);
         let result = counter.count_lines_of_code_for_all_types().unwrap_or(0);
         assert_ne!(result, 0);
-        println!("Code Analysis:\n {:?}", counter.tabular_output(&StdoutWriter{}));
+        counter.print_table(StdoutWriter::default());
+    }
+
+    #[test]
+    fn test_different_types_count_is_different(){
+        let config = Config::from_rel_file_path("config.txt").unwrap();
+        let mut counter = CountRoo::new(config);
+
+        let config2 = ConfigBuilder::default()
+            .project_path("src")
+            .extension("rs")
+            .count_empty_lines(false)
+            .build()
+            .unwrap();
+        let mut counter2 = CountRoo::new(config2);
+
+        let config3 = Config::default();
+        let mut counter3 = CountRoo::new(config3);
+
+        let result1 = counter.count_lines_of_code_for_all_types().unwrap_or(0);
+        let result2 = counter.count_lines_of_code_for_certain_types().unwrap_or(0);
+
+        assert_ne!(result1, result2);
+
+        let result1 = counter2.count_lines_of_code_for_all_types().unwrap_or(0);
+        let result2 = counter2.count_lines_of_code_for_certain_types().unwrap_or(0);
+
+        assert_ne!(result1, result2);
+
+        let result1 = counter3.count_lines_of_code_for_all_types().unwrap_or(0);
+        let result2 = counter3.count_lines_of_code_for_certain_types().unwrap_or(0);
+
+        assert_ne!(result1, result2);
+    }
+
+    #[test]
+    fn test_different_config_counts_are_equal_for_all_types(){
+        let config = Config::from_rel_file_path("config.txt").unwrap();
+        let mut counter = CountRoo::new(config);
+
+        let config2 = ConfigBuilder::default()
+            .project_path("src")
+            .extension("rs")
+            .count_empty_lines(false)
+            .build()
+            .unwrap();
+        let mut counter2 = CountRoo::new(config2);
+
+        let config3 = Config::default();
+        let mut counter3 = CountRoo::new(config3);
+
+
+        let result1 = counter.count_lines_of_code_for_all_types().unwrap_or(0);
+        let result2 = counter2.count_lines_of_code_for_all_types().unwrap_or(0);
+        let result3 = counter3.count_lines_of_code_for_all_types().unwrap_or(0);
+
+        assert_eq!(result1, result2);
+        assert_eq!(result1, result3);
+    }
+
+    #[test]
+    fn test_different_config_counts_are_equal_for_certain_types(){
+        let config = Config::from_rel_file_path("config.txt").unwrap();
+        let mut counter = CountRoo::new(config);
+
+        let config2 = ConfigBuilder::default()
+            .project_path("src")
+            .extension("rs")
+            .count_empty_lines(false)
+            .build()
+            .unwrap();
+        let mut counter2 = CountRoo::new(config2);
+
+        let config3 = Config::default();
+        let mut counter3 = CountRoo::new(config3);
+
+
+        let result1 = counter.count_lines_of_code_for_certain_types().unwrap_or(0);
+        let result2 = counter2.count_lines_of_code_for_certain_types().unwrap_or(0);
+        let result3 = counter3.count_lines_of_code_for_certain_types().unwrap_or(0);
+
+        assert_eq!(result1, result2);
+        assert_eq!(result1, result3);
     }
 
     #[test]
@@ -578,7 +693,7 @@ mod tests {
             .unwrap();
 
         let config2 = Config {
-            project_path: src_path.join("src").to_string_lossy().to_string(),
+            project_path: src_path.to_string_lossy().to_string(),
             config_path: None,
             extensions: vec!["rs".to_string(),"py".to_string()],
             count_empty_lines: false,
@@ -599,7 +714,7 @@ mod tests {
             .unwrap();
 
         let config2 = Config {
-            project_path: PathBuf::from("E:\\RustRoverProjects\\countroo\\src").to_string_lossy().to_string().replace('\\', "/") ,
+            project_path: PathBuf::from("E:\\RustroverProjects\\countroo\\src").to_string_lossy().to_string() ,
             config_path: None,
             extensions: vec!["rs".to_string(),"py".to_string()],
             count_empty_lines: false,

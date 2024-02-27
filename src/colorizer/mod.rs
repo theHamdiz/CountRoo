@@ -1,28 +1,45 @@
+#[cfg(feature = "colored-output")]
+use colored::Color;
 
 #[derive(Debug, Clone, Copy)]
+#[cfg(feature = "colored-output")]
 pub enum AccentColor<'a> {
     Hex(&'a str),
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct LanguageColorMapping<'a> {
+#[cfg(feature = "colored-output")]
+pub(crate) struct LanguageColorMapping<'a> {
     pub(crate) extension: &'a str,
     pub(crate) color: AccentColor<'a>,
 }
 
 #[derive(Debug, Clone)]
-pub struct LanguageBrandings<'a>{
+#[cfg(feature = "colored-output")]
+pub(crate) struct LanguageBrandings<'a>{
     pub(crate) color_map: Vec<LanguageColorMapping<'a>>,
 }
 
+#[cfg(feature = "colored-output")]
 impl<'a> LanguageBrandings<'a>{
     fn new(color_map: Vec<LanguageColorMapping<'a>>) -> LanguageBrandings<'a> {
         LanguageBrandings {
             color_map,
         }
     }
+
+    pub fn get_color_by_extension(&self, extension: &str) -> Option<Color> {
+        self.color_map.iter()
+            .find(|mapping| mapping.extension == extension)
+            .map(|mapping| { // Extract color (assuming you have a way to convert AccentColor to Color)
+                match mapping.color {
+                    AccentColor::Hex(hex_str) => Color::from(hex_str), // Replace with your conversion logic
+                }
+            })
+    }
 }
 
+#[cfg(feature = "colored-output")]
 impl<'a> Default for LanguageBrandings<'a>{
     fn default() -> Self{
         let color_map : Vec<LanguageColorMapping<'a>> = vec![
@@ -255,3 +272,5 @@ impl<'a> Default for LanguageBrandings<'a>{
         )
     }
 }
+
+
