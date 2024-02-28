@@ -1063,6 +1063,7 @@ macro_rules! count_some {
 
 #[cfg(feature = "default")]
 #[allow(unused_macros)]
+#[macro_export]
 macro_rules! count_some_generic {
     ($folder:ident) => {
         let mut countroo = CountRoo::new(Config::default());
@@ -1132,6 +1133,7 @@ macro_rules! count_it_all {
 
 #[cfg(feature = "default")]
 #[allow(unused_macros)]
+#[macro_export]
 macro_rules! count_folder {
      ($folder:ident) => {
         let mut countroo = CountRoo::new(Config::from_rel_file_path("config.txt").unwrap());
