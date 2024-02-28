@@ -21,7 +21,7 @@ Adding `CountRoo` to your Rust project is easier than spotting a koala in a euca
 
     ```toml
     [build-dependencies]
-    countroo = { version = "0.1.1", features = ["default"]}
+    countroo = { version = "0.1.2", features = ["default"]}
     ```
 
 2. **Create or Update Your build.rs** 🛠️
@@ -37,6 +37,8 @@ Adding `CountRoo` to your Rust project is easier than spotting a koala in a euca
         countroo::count_it_all!();
         // Or for the adventurous:
         // countroo::count_some!();
+        // If you're using it for a workspace, you can just use it like this inside any project's build.rs
+        countroo::count_it_all!(workspace: true);
     }
     ```
 
