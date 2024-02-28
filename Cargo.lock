@@ -76,7 +76,7 @@ dependencies = [
 
 [[package]]
 name = "countroo"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "cargo-toml-workspace",
  "num-format",

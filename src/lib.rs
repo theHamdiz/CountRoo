@@ -134,11 +134,11 @@ impl From<toml::de::Error> for LocCounterError{
 #[cfg(any(feature = "toml-config", feature = "json-config", feature = "yaml-config", feature = "xml-config", feature = "newline-config"))]
 #[derive(Debug, Deserialize, Eq, PartialEq, Clone)]
 pub struct Config {
-    project_src_path: String,
+    pub project_src_path: String,
     #[cfg(any(feature = "toml-config", feature = "json-config", feature = "yaml-config", feature = "xml-config", feature = "newline-config"))]
-    config_path: Option<String>,
-    extensions: Vec<String>,
-    count_empty_lines: bool,
+    pub config_path: Option<String>,
+    pub extensions: Vec<String>,
+    pub count_empty_lines: bool,
 }
 
 
@@ -736,14 +736,14 @@ pub trait Analyzable{
 // --- Core Logic ---
 #[derive(Debug)]
 pub struct CountRoo {
-    config: Config,
-    total_lines: usize,
-    num_files: usize,
-    num_crates: usize,
-    project_name: Option<String>,
-    rust_edition: Option<String>,
-    rustc_version: Option<String>,
-    num_modules: usize,
+    pub config: Config,
+    pub total_lines: usize,
+    pub num_files: usize,
+    pub num_crates: usize,
+    pub project_name: Option<String>,
+    pub rust_edition: Option<String>,
+    pub rustc_version: Option<String>,
+    pub num_modules: usize,
 }
 
 impl Exportable for CountRoo {
@@ -813,7 +813,25 @@ impl CountRoo {
         Ok(count)
     }
 
-    pub(crate) fn calculate_extension_counts(&self) -> HashMap<String, usize> {
+
+    /// Calculates and aggregates the lines of code per occurrences of each file extension within the project's source directory.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`: A reference to the current instance of the struct.
+    ///
+    /// # Returns
+    ///
+    /// A HashMap where:
+    /// * Keys are strings representing unique file extensions found.
+    /// * Values are the corresponding counts of files with that extension.
+    ///
+    /// # Assumptions
+    ///
+    /// * The `config` member of the struct holds relevant configuration data.
+    /// * `config.count_empty_lines` influences the counting behavior (Toggling it to true marks whitespace new lines as code lines).
+    /// * `config.project_src_path` defines the base directory for searching files (Usually src folder).
+    pub fn calculate_extension_counts(&self) -> HashMap<String, usize> {
        Self::calculate_extension_counts_for(self.config.count_empty_lines, &self.config.project_src_path)
     }
 
@@ -927,9 +945,7 @@ impl Analyzable for CountRoo{
 #[cfg(feature = "default")]
 impl Default for CountRoo {
     fn default() -> Self {
-        let project_path = Config::find_src_folder().unwrap();
-        let project_path = project_path.to_string_lossy().to_string();
-        CountRoo::new(Config::from_abs_file_path("config.txt", project_path).unwrap())
+        CountRoo::new(Config::from_rel_file_path("config.txt").unwrap())
     }
 }
 
@@ -1039,7 +1055,7 @@ macro_rules! count_some_generic {
 /// Simply invoke the macro in your code where you need to perform the count:
 /// ```rust
 /// // Inside build.rs
-/// use countroo::count_some;
+/// use countroo::{count_some, count_some_generic};
 /// fn main() {
 ///     count_some!();
 ///     // If you're using it for a workspace, you can just use it like this inside any project's build.rs
@@ -1083,7 +1099,7 @@ macro_rules! count_some {
 #[macro_export]
 macro_rules! count_folder {
      ($folder:ident) => {
-        let mut counter = $crate::CountRoo::new($crate::Config::from_rel_file_path("config.txt").unwrap());
+        let mut counter = $crate::CountRoo::default();
         counter.config.project_src_path = $folder.to_string_lossy().to_string();
         counter.count_lines_of_code_for_all_types().expect("Failed to count lines of code");
         let writer_boxed = Box::<$crate::output_adapters::StdoutWriter>::default();
@@ -1112,7 +1128,7 @@ macro_rules! count_folder {
 /// To get a comprehensive line count of your project, simply call:
 /// ```rust
 /// // Inside build.rs
-/// use countroo::count_it_all;
+/// use countroo::{count_it_all, count_folder};
 /// fn main() {
 ///     count_it_all!();
 ///     // If you're using it for a workspace, you can just use it like this inside any project's build.rs
