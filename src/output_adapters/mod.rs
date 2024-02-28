@@ -1,9 +1,5 @@
-#[cfg(feature = "colored-output")]
-use colored::ColoredString;
-#[cfg(feature = "colored-output")]
-use crate::colorizer::LanguageColorMapping;
-#[cfg(any(feature = "colored-output", feature = "tabular-output"))]
-use crate::tabular::Table;
+
+#[cfg( feature = "tabular-output")]
 
 #[cfg(feature = "default")]
 pub trait OutputWriter {
@@ -38,12 +34,7 @@ impl OutputWriter for StdoutWriter {
 pub struct FileWriter {
     file_path: String,
 }
-#[cfg(feature = "default")]
-impl FileWriter {
-    fn new(file_path: &str) -> Self {
-        FileWriter { file_path: file_path.to_string() }
-    }
-}
+
 #[cfg(feature = "default")]
 impl OutputWriter for FileWriter {
     fn write(&self, data: &str) -> Result<(), std::io::Error> {
@@ -156,31 +147,3 @@ impl OutputWriter for YamlWriter {
     }
 }
 
-#[cfg(feature = "default")]
-pub trait FormattedOutput {
-    fn formatted_output(&self) -> String;
-}
-
-#[cfg(feature = "tabular-output")]
-pub trait TabularOutput {
-    /// prints the object as a formatted table.
-    /// 
-    /// # Arguments 
-    /// 
-    /// * `output_writer`: StadoutWriter - the writer to use for output in the console.
-    /// 
-    /// returns: () 
-    /// 
-    /// # Examples 
-    /// 
-    /// ```
-    /// 
-    /// tabular.print_table(StdoutWriter::new());
-    /// ```
-    fn print_table(&self, output_writer: StdoutWriter);
-}
-
-#[cfg(feature = "colored-output")]
-pub(crate) trait ColorizedOutput {
-    fn apply_colors_to_table(&self, table: &Table, color_map: &[LanguageColorMapping]) -> ColoredString;
-}

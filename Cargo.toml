@@ -3,20 +3,27 @@ name = "countroo"
 version = "0.1.0"
 edition = "2021"
 build = "build.rs"
+repository = "countroo"
+license-file = "LICENSE"
+description = "Countroo is a tool to give basic code analysis inside your rust projects, it supports line counting, module counting, dependency counting, project listing as well as Rust Edition & rustc Version detection."
+readme = "README.md"
+keywords = ["counter", "analysis", "dependency", "module", "line" ]
+categories = ["development-tools", "development-tools::procedural-macro-helpers", "command-line-utilities"]
 
 [dependencies]
 walkdir = "2.4.0"
 num-format = "0.4.4"
-rayon = "1.8.1"
+rayon = "1.9.0"
 serde = { version = "1.0.197", features = ["derive"] }
 toml = { version = "0.8.10", optional = true }
 serde_yaml = { version = "0.9.32", optional = true }
 serde_json = { version = "1.0.114", optional = true }
 quick-xml = { version = "0.31.0", optional = true, features = ["serialize"] }
-colored = {version = "2.1.0", optional = true}
+prettytable-rs = {version = "^0.10", optional = true}
+cargo-toml-workspace = "5.0.0"
 
 [features]
-full = ["toml", "newline-config", "toml-config", "yaml-config", "json-config", "xml-config", "tabular-output", "toml-output", "yaml-output", "json-output", "xml-output", "colored-output"]
+full = ["toml", "newline-config", "toml-config", "yaml-config", "json-config", "xml-config", "tabular-output", "toml-output", "yaml-output", "json-output", "xml-output"]
 default = ["newline-config", "tabular-output"]
 newline-config = []
 toml-config = ["toml"]
@@ -24,10 +31,13 @@ yaml-config = ["serde_yaml"]
 json-config = ["serde_json"]
 xml-config = ["quick-xml"]
 
-tabular-output = []
+tabular-output = ["prettytable-rs"]
 toml-output = ["toml"]
 yaml-output = ["serde_yaml"]
 json-output = ["serde_json"]
 xml-output = ["quick-xml"]
-colored-output = ["colored"]
 
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = "z"
