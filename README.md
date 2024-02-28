@@ -21,7 +21,7 @@ Adding `CountRoo` to your Rust project is easier than spotting a koala in a euca
 
     ```toml
     [build-dependencies]
-    countroo = { version = "0.1.0", features = ["default"]}
+    countroo = { version = "0.1.1", features = ["default"]}
     ```
 
 2. **Create or Update Your build.rs** 🛠️
