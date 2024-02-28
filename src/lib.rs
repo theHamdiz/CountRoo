@@ -1036,6 +1036,7 @@ impl Display for CountRoo{
 /// delivering a concise report directly to your console. 🖨️✨
 #[cfg(feature = "default")]
 #[allow(unused_macros)]
+#[macro_export]
 macro_rules! count_some {
     () => {
         let mut countroo = CountRoo::new(Config::default());
@@ -1077,6 +1078,7 @@ macro_rules! count_some {
 /// insights with minimal setup. 🚀📊
 #[cfg(feature = "default")]
 #[allow(unused_macros)]
+#[macro_export]
 macro_rules! count_it_all {
      () => {
         let mut countroo = CountRoo::new(Config::from_rel_file_path("config.txt").unwrap());
