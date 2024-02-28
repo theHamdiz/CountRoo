@@ -1005,6 +1005,20 @@ impl Display for CountRoo{
 
 }
 
+#[cfg(feature = "default")]
+#[allow(unused_macros)]
+#[macro_export]
+macro_rules! count_some_generic {
+    ($folder:ident) => {
+        let mut counter = $crate::CountRoo::new(Config::default());
+        counter.config.project_src_path = $folder.to_string_lossy().to_string();
+        counter.count_lines_of_code_for_certain_types().expect("Failed to count lines of code");
+        let writer_boxed = Box::<$crate::output_adapters::StdoutWriter>::default();
+        counter.export(writer_boxed).expect("Failed to export to Stdout");
+    }
+}
+
+
 /// Executes a selective line count using `CountRoo` with the default configuration. 📊🔍
 ///
 /// This macro simplifies the process of counting lines of code for certain types within your
@@ -1061,16 +1075,19 @@ macro_rules! count_some {
 }
 
 
+
+
+
 #[cfg(feature = "default")]
 #[allow(unused_macros)]
 #[macro_export]
-macro_rules! count_some_generic {
-    ($folder:ident) => {
-        let mut countroo = CountRoo::new(Config::default());
-        countroo.config.project_src_path = $folder.to_string_lossy().to_string();
-        countroo.count_lines_of_code_for_certain_types().expect("Failed to count lines of code");
-        let writer_boxed = Box::<StdoutWriter>::default();
-        countroo.export(writer_boxed).expect("Failed to export to Stdout");
+macro_rules! count_folder {
+     ($folder:ident) => {
+        let mut counter = $crate::CountRoo::new($crate::Config::from_rel_file_path("config.txt").unwrap());
+        counter.config.project_src_path = $folder.to_string_lossy().to_string();
+        counter.count_lines_of_code_for_all_types().expect("Failed to count lines of code");
+        let writer_boxed = Box::<$crate::output_adapters::StdoutWriter>::default();
+        counter.export(writer_boxed).expect("Failed to export to Stdout");
     }
 }
 
@@ -1112,18 +1129,18 @@ macro_rules! count_some_generic {
 macro_rules! count_it_all {
     () => {
         // Default behavior remains the same
-        let pp = Config::find_src_folder().unwrap();
+        let pp = $crate::Config::find_src_folder().unwrap();
         count_folder!(pp);
     };
     (workspace: true) => {
         // Logic when workspace toggle is true
-        let pp = Config::find_src_folder().unwrap();
+        let pp = $crate::Config::find_src_folder().unwrap();
         let pp = pp.parent().unwrap();
         count_folder!(pp);
     };
     (workspace: false) => {
         // Logic when workspace toggle is false
-        let pp = Config::find_src_folder().unwrap();
+        let pp = $crate::Config::find_src_folder().unwrap();
         count_folder!(pp);
     };
     ($other:tt) => { // Catch any other inputs that don't match the patterns above
@@ -1131,18 +1148,7 @@ macro_rules! count_it_all {
    }
 }
 
-#[cfg(feature = "default")]
-#[allow(unused_macros)]
-#[macro_export]
-macro_rules! count_folder {
-     ($folder:ident) => {
-        let mut countroo = CountRoo::new(Config::from_rel_file_path("config.txt").unwrap());
-        countroo.config.project_src_path = $folder.to_string_lossy().to_string();
-        countroo.count_lines_of_code_for_all_types().expect("Failed to count lines of code");
-        let writer_boxed = Box::<StdoutWriter>::default();
-        countroo.export(writer_boxed).expect("Failed to export to Stdout");
-    }
-}
+
 
 //
 // End of Countroo Section!
