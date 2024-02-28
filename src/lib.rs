@@ -33,7 +33,7 @@ use serde_yaml::Error as YamlError;
 use quick_xml::de::DeError as XmlError;
 
 #[cfg(feature = "default")]
-const CONFIG_TXT_CONTENTS: &str = include_str!("config.txt");
+pub const CONFIG_TXT_CONTENTS: &str = include_str!("config.txt");
 
 ///
 /// Custom Traits & Types Section
@@ -795,7 +795,7 @@ impl CountRoo {
         Ok(self.total_lines)
     }
 
-    pub(crate) fn count_lines_for_file(count_empty_lines: bool, entry: &String) -> Result<usize, LocCounterError> {
+    pub fn count_lines_for_file(count_empty_lines: bool, entry: &String) -> Result<usize, LocCounterError> {
         // Return early if the path is not a file, just in case ( Fallback Guard ).
         if !Path::new(entry).is_file() {
             return Ok(0);
@@ -835,7 +835,7 @@ impl CountRoo {
        Self::calculate_extension_counts_for(self.config.count_empty_lines, &self.config.project_src_path)
     }
 
-    pub(crate) fn calculate_extension_counts_for(count_empty_lines: bool, path: &String) -> HashMap<String, usize> {
+    pub fn calculate_extension_counts_for(count_empty_lines: bool, path: &String) -> HashMap<String, usize> {
         let mut extension_counts = HashMap::new();
         for entry in WalkDir::new(path) {
             let entry = entry.unwrap();
