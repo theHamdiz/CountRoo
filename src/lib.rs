@@ -125,7 +125,7 @@ impl From<toml::de::Error> for LocCounterError{
 /// ## Example Usage
 /// ```rust
 /// // Assuming `toml-config` feature is enabled
-/// use countroo::Config;
+/// use countroo::prelude::*;
 /// let config = Config::default();
 /// ```
 ///
@@ -294,7 +294,7 @@ impl Config {
     ///
     /// ## Example Usage
     /// ```rust
-    /// use countroo::Config;
+    /// use countroo::prelude::*;
     /// let custom_config = Config::from_str_vec(
     ///     vec!["rs".to_string(), "toml".to_string()],
     ///     true,
@@ -328,7 +328,7 @@ impl Config {
     ///
     /// ## Example Usage
     /// ```rust
-    /// use countroo::Config;
+    /// use countroo::prelude::*;
     /// let my_config_builder = Config::builder()
     ///     .project_path("path/to/my/awesome/project")
     ///     .extension("rs")
@@ -373,7 +373,7 @@ impl Default for Config{
 /// quick example to get you started:
 ///
 /// ```rust
-/// use countroo::ConfigBuilder;
+/// use countroo::prelude::*;
 /// let config = ConfigBuilder::default()
 ///     .project_path("src")
 ///     .extension("rs")
@@ -415,7 +415,7 @@ impl ConfigBuilder {
     ///
     /// ## Example Usage
     /// ```rust
-    /// use countroo::ConfigBuilder;
+    /// use countroo::prelude::*;
     /// let config = ConfigBuilder::default()
     ///     .project_path("src") // Directing to the src directory
     ///     .extension("rs") // We're only interested in Rust files
@@ -466,7 +466,7 @@ impl ConfigBuilder {
     ///
     /// ## Example Usage
     /// ```rust
-    /// use countroo::ConfigBuilder;
+    /// use countroo::prelude::*;
     /// let config = ConfigBuilder::default()
     ///     .project_path("/path/to/glorious/project")
     ///     .extension("rs") // Just focusing on Rust files here!
@@ -497,7 +497,7 @@ impl ConfigBuilder {
     ///
     /// ## Example Usage
     /// ```rust
-    /// use countroo::ConfigBuilder;
+    /// use countroo::prelude::*;
     /// let config = ConfigBuilder::default()
     ///     .project_path("/path/to/project")
     ///     .extensions(vec!["rs", "md", "toml"]) // Rustacean essentials!
@@ -528,7 +528,7 @@ impl ConfigBuilder {
     ///
     /// ## Example Usage
     /// ```rust
-    /// use countroo::ConfigBuilder;
+    /// use countroo::prelude::*;
     /// let config = ConfigBuilder::default()
     ///     .project_path("/path/to/project")
     ///     .extension("rs")
@@ -557,7 +557,7 @@ impl ConfigBuilder {
     ///
     /// ## Example Usage
     /// ```rust
-    /// use countroo::ConfigBuilder;
+    /// use countroo::prelude::*;
     /// let builder = ConfigBuilder::default()
     ///     .project_path("path/to/my/rust/project")
     ///     .extension("rs")
@@ -595,8 +595,7 @@ impl ConfigBuilder {
 ///
 /// ## Example
 /// ```rust
-/// use countroo::Exportable;
-/// use countroo::output_adapters::OutputWriter;
+/// use countroo::prelude::*;
 /// struct MyExportableData {
 ///     // Your data fields here
 /// }
@@ -636,8 +635,7 @@ pub trait Exportable {
 ///
 /// ## Example Implementation
 /// ```rust
-/// use cargo_toml_workspace::cargo_toml::Manifest;
-/// use countroo::{Analyzable, LocCounterError};
+/// use countroo::prelude::*;
 /// struct MyProjectAnalyzer {
 ///     // Project-specific fields
 /// }
@@ -722,7 +720,7 @@ pub trait Analyzable{
 ///
 /// ## Example
 /// ```rust
-/// use countroo::{Config, CountRoo, PathHelpers};
+/// use countroo::prelude::*;
 /// let config = Config::from_rel_file_path("path/to/config").unwrap();
 /// let mut countroo = CountRoo::default();
 /// let total_lines = countroo.count_lines_of_code().unwrap();
@@ -1055,7 +1053,7 @@ macro_rules! count_some_generic {
 /// Simply invoke the macro in your code where you need to perform the count:
 /// ```rust
 /// // Inside build.rs
-/// use countroo::{count_some, count_some_generic};
+/// use countroo::prelude::*;
 /// fn main() {
 ///     count_some!();
 ///     // If you're using it for a workspace, you can just use it like this inside any project's build.rs
@@ -1128,7 +1126,7 @@ macro_rules! count_folder {
 /// To get a comprehensive line count of your project, simply call:
 /// ```rust
 /// // Inside build.rs
-/// use countroo::{count_it_all, count_folder};
+/// use countroo::prelude::*;
 /// fn main() {
 ///     count_it_all!();
 ///     // If you're using it for a workspace, you can just use it like this inside any project's build.rs
@@ -1381,4 +1379,27 @@ mod tests {
         assert_eq!(config.extensions, config2.extensions);
         assert_eq!(config.count_empty_lines, config2.count_empty_lines);
     }
+}
+
+
+
+pub mod prelude{
+    pub use crate::Config;
+    pub use crate::ConfigBuilder;
+    pub use crate::CountRoo;
+    pub use crate::Analyzable;
+    pub use crate::Exportable;
+    pub use crate::LocCounterError;
+    pub use crate::PathHelpers;
+    pub use crate::CertainTypesCounter;
+    pub use crate::AllTypesCounter;
+    pub use crate::output_adapters::OutputWriter;
+    pub use crate::output_adapters::StdoutWriter;
+    pub use crate::output_adapters::FileWriter;
+    pub use crate::output_adapters::JsonWriter;
+    pub use crate::output_adapters::XmlWriter;
+    pub use crate::output_adapters::YamlWriter;
+    pub use crate::output_adapters::TomlWriter;
+    
+    pub use crate::{count_it_all, count_some, count_folder, count_some_generic};
 }

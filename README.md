@@ -21,7 +21,7 @@ Adding `CountRoo` to your Rust project is easier than spotting a koala in a euca
 
     ```toml
     [build-dependencies]
-    countroo = { version = "0.1.6", features = ["default"]}
+    countroo = { version = "0.1.7", features = ["default"]}
     ```
 
 2. **Create or Update Your build.rs** 🛠️
@@ -33,12 +33,13 @@ Adding `CountRoo` to your Rust project is easier than spotting a koala in a euca
    Inside your `build.rs`, let `CountRoo` work its magic by using its provided macros to analyze your project:
 
     ```rust
+    use countroo::prelude::*;
     fn main() {
-        countroo::count_it_all!();
+        count_it_all!();
         // Or for the adventurous:
         // countroo::count_some!();
         // If you're using it for a workspace, you can just use it like this inside any project's build.rs
-        countroo::count_it_all!(workspace: true);
+        count_it_all!(workspace: true);
     }
     ```
 
@@ -59,12 +60,13 @@ Adding `CountRoo` to your Rust project is easier than spotting a koala in a euca
 Want to quickly count all lines of code? Just use the `count_it_all!` macro in your `build.rs`. For a more selective count, the `count_some!` macro is your friend. Here’s a peek at how it’s done:
 
 ```rust
+use countroo::prelude::*;
 fn main() {
     // To count everything:
-    countroo::count_it_all!();
+    count_it_all!();
     
     // Feeling selective?
-    countroo::count_some!();
+    count_some!();
 }
 ```
 
