@@ -1393,13 +1393,7 @@ pub mod prelude{
     pub use crate::PathHelpers;
     pub use crate::CertainTypesCounter;
     pub use crate::AllTypesCounter;
-    pub use crate::output_adapters::OutputWriter;
-    pub use crate::output_adapters::StdoutWriter;
-    pub use crate::output_adapters::FileWriter;
-    pub use crate::output_adapters::JsonWriter;
-    pub use crate::output_adapters::XmlWriter;
-    pub use crate::output_adapters::YamlWriter;
-    pub use crate::output_adapters::TomlWriter;
+    pub use crate::output_adapters::*;
     
     pub use crate::{count_it_all, count_some, count_folder, count_some_generic};
 }
